@@ -1,6 +1,7 @@
 from base import BaseDataLoader
 
 from .kitti_odometry_dataset import *
+from .deepscenario_dataset import *
 from .oxford_robotcar_dataset import OxfordRobotCarDataset
 from .tum_mono_vo_dataset import *
 from .tum_rgbd_dataset import *

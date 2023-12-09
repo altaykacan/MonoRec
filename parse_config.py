@@ -13,7 +13,8 @@ class ConfigParser:
         # parse default and custom cli options
         for opt in options:
             args.add_argument(*opt.flags, default=None, type=opt.type)
-        args = args.parse_args()
+        args, unknown = args.parse_known_args() # Needed to make it work with jupyter notebook
+        # args = args.parse_args()
         self.args = args
 
         if args.device:
@@ -24,7 +25,7 @@ class ConfigParser:
             self.cfg_fname = Path(args.config)
             config = read_json(self.cfg_fname)
             self.resume = None
-        else:        
+        else:
             self.resume = Path(args.resume)
             resume_cfg_fname = self.resume.parent / 'config.json'
             config = read_json(resume_cfg_fname)
@@ -71,7 +72,7 @@ class ConfigParser:
 
     def initialize(self, name, module, *args, **kwargs):
         """
-        finds a function handle with the name given as 'type' in config, and returns the 
+        finds a function handle with the name given as 'type' in config, and returns the
         instance initialized with corresponding keyword args given as 'args'.
         """
         module_name = self[name]['type']

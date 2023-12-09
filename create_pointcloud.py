@@ -63,6 +63,8 @@ def main(config):
     key_index = buffer_length // 2
 
     with torch.no_grad():
+        # The target is the depth we use as the labels, when creating a pointcloud
+        # it is NOT used
         for i, (data, target) in enumerate(tqdm(data_loader)):
             data = to(data, device)
             # if not torch.any(pose_distance_thresh(data, spatial_thresh=1)):
