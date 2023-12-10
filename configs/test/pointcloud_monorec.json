@@ -2,7 +2,7 @@
   "name": "Pointcloud Creation",
   "n_gpu": 8,
   "output_dir": "saved/pointclouds/monorec",
-  "file_name": "seequence_07.ply",
+  "file_name": "sequence_07_proper.ply",
   "roi": [
     40,
     256,
@@ -30,14 +30,14 @@
       "frame_count": 2,
       "lidar_depth": true,
       "sequences": [
-        "04"
+        "07"
       ],
       "target_image_size": [
         256,
         512
       ],
       "use_color": true,
-      "use_dso_poses": true
+      "use_dso_poses": false
     }
   }
 }

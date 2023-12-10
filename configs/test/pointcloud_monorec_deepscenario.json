@@ -1,8 +1,8 @@
 {
   "name": "Pointcloud Creation",
-  "n_gpu": 8,
+  "n_gpu": 1,
   "output_dir": "saved/pointclouds/monorec",
-  "file_name": "deepscenario.ply",
+  "file_name": "deepscenario_scale_50.ply",
   "roi": [
     40,
     256,
@@ -26,7 +26,6 @@
     "type": "DeepScenarioDataset",
     "args": {
       "dataset_dir": "/usr/stud/kaa/thesis/data_temp/deep_scenario/monorec",
-      "depth_folder": "image_depth_annotated",
       "frame_count": 2,
       "lidar_depth": false,
       "sequences": [
@@ -37,7 +36,8 @@
         512
       ],
       "use_color": true,
-      "use_dso_poses": true
+      "use_dso_poses": true,
+      "scale_factor":50
     }
   }
 }

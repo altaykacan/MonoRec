@@ -21,11 +21,12 @@ class DeepScenarioOdometry:
     """Class for parsing Deep Scenario (or any custom data) based on the pykitti
     implemeentation"""
 
-    def __init__(self, base_path, sequence, **kwargs):
+    def __init__(self, base_path, sequence, scale_factor=1, **kwargs):
         """Set the path."""
         self.sequence = sequence
         self.sequence_path = os.path.join(base_path, 'sequences', sequence)
         self.pose_path = os.path.join(base_path, 'poses')
+        self.scale_factor = scale_factor
         self.frames = kwargs.get('frames', None)
 
         # Default image file extension is 'png'
@@ -216,6 +217,8 @@ class DeepScenarioOdometry:
                 for line in lines:
                     T_w_cam0 = np.fromstring(line, dtype=float, sep=' ')
                     T_w_cam0 = T_w_cam0.reshape(3, 4)
+                    # Multiply the translation components (last column) with the scale factor
+                    T_w_cam0[:,-1] = T_w_cam0[:,-1] * self.scale_factor
                     T_w_cam0 = np.vstack((T_w_cam0, [0, 0, 0, 1]))
                     poses.append(T_w_cam0)
 
@@ -230,7 +233,9 @@ class DeepScenarioDataset(Dataset):
 
     def __init__(self, dataset_dir, frame_count=2, sequences=None, depth_folder="image_depth",
                  target_image_size=(256, 512), max_length=None, dilation=1, offset_d=0, use_color=True, use_dso_poses=False,
-                 use_color_augmentation=False, lidar_depth=False, dso_depth=True, annotated_lidar=False, return_stereo=False, return_mvobj_mask=False, use_index_mask=()):
+                 use_color_augmentation=False, lidar_depth=False, dso_depth=True, annotated_lidar=False, return_stereo=False,
+                 return_mvobj_mask=False, use_index_mask=(),
+                 scale_factor=1):
         """
         Dataset implementation for Deep Scenario data, heavily inspired by the KITTI Odometry implementation.
         :param dataset_dir: Top level folder for KITTI Odometry (should contain folders sequences, poses, poses_dvso (if available)
@@ -250,6 +255,7 @@ class DeepScenarioDataset(Dataset):
         :param return_stereo: Return additional stereo frame. Only used during training. (Default=False)
         :param return_mvobj_mask: Return additional moving object mask. Only used during training. If return_mvobj_mask=2, then the mask is returned as target instead of the depthmap. (Default=False)
         :param use_index_mask: Use the listed index masks (if a sample is listed in one of the masks, it is not used). (Default=())
+        :param scale_factor: Similar to the implementation of TUMMonoVODataset, this is useful when using monocular odometry as the trajectories might not have the true scale
         """
         self.dataset_dir = Path(dataset_dir)
         self.frame_count = frame_count
@@ -261,8 +267,10 @@ class DeepScenarioDataset(Dataset):
         self.target_image_size = target_image_size
         self.use_index_mask = use_index_mask
         self.offset_d = offset_d
+        self.scale_factor = scale_factor
+
         # Using custom Odometry class
-        self._datasets = [DeepScenarioOdometry(dataset_dir, sequence) for sequence in self.sequences]
+        self._datasets = [DeepScenarioOdometry(dataset_dir, sequence, scale_factor) for sequence in self.sequences]
         # self._datasets = [pykitti.odometry(dataset_dir, sequence) for sequence in self.sequences]
         self._offset = (frame_count // 2) * dilation
         extra_frames = frame_count * dilation
