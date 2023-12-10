@@ -139,6 +139,7 @@ class DeepScenarioOdometry:
         filedata = utils.read_calib_file(calib_filepath)
 
         # Create 3x4 projection matrices, assuming all cameras are the same
+        # You would just need to provide `P0: ... ... ...` in calib.txt
         P_rect_00 = np.reshape(filedata['P0'], (3, 4))
         P_rect_10 = P_rect_00
         P_rect_20 = P_rect_00
@@ -150,19 +151,27 @@ class DeepScenarioOdometry:
         data['P_rect_30'] = P_rect_30
 
         # Compute the rectified extrinsics from cam0 to camN
-        # Assuming there is no difference between the cameras
+        # Assuming there is no difference between the cameras (monocular video)
         T1 = np.eye(4)
         T2 = np.eye(4)
         T3 = np.eye(4)
 
-       # Ignoring velodyne data, as we have monocular video
+        # Ignoring velodyne data, as we have monocular video
+        # # Compute the velodyne to rectified camera coordinate transforms
+        # data['T_cam0_velo'] = np.reshape(filedata['Tr'], (3, 4))
+        # data['T_cam0_velo'] = np.vstack([data['T_cam0_velo'], [0, 0, 0, 1]])
+        # data['T_cam1_velo'] = T1.dot(data['T_cam0_velo'])
+        # data['T_cam2_velo'] = T2.dot(data['T_cam0_velo'])
+        # data['T_cam3_velo'] = T3.dot(data['T_cam0_velo'])
 
-        # Compute the camera intrinsics
+        # Compute the camera intrinsics which are all the same
+        # Hacky solution to not change getter methods from pykitti.odometry
         data['K_cam0'] = P_rect_00[0:3, 0:3]
         data['K_cam1'] = P_rect_10[0:3, 0:3]
         data['K_cam2'] = P_rect_20[0:3, 0:3]
         data['K_cam3'] = P_rect_30[0:3, 0:3]
 
+        # No stereo baseline
         # Compute the stereo baselines in meters by projecting the origin of
         # each camera frame into the velodyne frame and computing the distances
         # # between them
@@ -252,6 +261,7 @@ class DeepScenarioDataset(Dataset):
         self.target_image_size = target_image_size
         self.use_index_mask = use_index_mask
         self.offset_d = offset_d
+        # Using custom Odometry class
         self._datasets = [DeepScenarioOdometry(dataset_dir, sequence) for sequence in self.sequences]
         # self._datasets = [pykitti.odometry(dataset_dir, sequence) for sequence in self.sequences]
         self._offset = (frame_count // 2) * dilation
