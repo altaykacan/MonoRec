@@ -138,11 +138,11 @@ class DeepScenarioOdometry:
         calib_filepath = os.path.join(self.sequence_path, 'calib.txt')
         filedata = utils.read_calib_file(calib_filepath)
 
-        # Create 3x4 projection matrices
+        # Create 3x4 projection matrices, assuming all cameras are the same
         P_rect_00 = np.reshape(filedata['P0'], (3, 4))
-        P_rect_10 = np.reshape(filedata['P1'], (3, 4))
-        P_rect_20 = np.reshape(filedata['P2'], (3, 4))
-        P_rect_30 = np.reshape(filedata['P3'], (3, 4))
+        P_rect_10 = P_rect_00
+        P_rect_20 = P_rect_00
+        P_rect_30 = P_rect_00
 
         data['P_rect_00'] = P_rect_00
         data['P_rect_10'] = P_rect_10
@@ -150,19 +150,12 @@ class DeepScenarioOdometry:
         data['P_rect_30'] = P_rect_30
 
         # Compute the rectified extrinsics from cam0 to camN
+        # Assuming there is no difference between the cameras
         T1 = np.eye(4)
-        T1[0, 3] = P_rect_10[0, 3] / P_rect_10[0, 0]
         T2 = np.eye(4)
-        T2[0, 3] = P_rect_20[0, 3] / P_rect_20[0, 0]
         T3 = np.eye(4)
-        T3[0, 3] = P_rect_30[0, 3] / P_rect_30[0, 0]
 
-        # Compute the velodyne to rectified camera coordinate transforms
-        data['T_cam0_velo'] = np.reshape(filedata['Tr'], (3, 4))
-        data['T_cam0_velo'] = np.vstack([data['T_cam0_velo'], [0, 0, 0, 1]])
-        data['T_cam1_velo'] = T1.dot(data['T_cam0_velo'])
-        data['T_cam2_velo'] = T2.dot(data['T_cam0_velo'])
-        data['T_cam3_velo'] = T3.dot(data['T_cam0_velo'])
+       # Ignoring velodyne data, as we have monocular video
 
         # Compute the camera intrinsics
         data['K_cam0'] = P_rect_00[0:3, 0:3]
@@ -172,15 +165,15 @@ class DeepScenarioOdometry:
 
         # Compute the stereo baselines in meters by projecting the origin of
         # each camera frame into the velodyne frame and computing the distances
-        # between them
-        p_cam = np.array([0, 0, 0, 1])
-        p_velo0 = np.linalg.inv(data['T_cam0_velo']).dot(p_cam)
-        p_velo1 = np.linalg.inv(data['T_cam1_velo']).dot(p_cam)
-        p_velo2 = np.linalg.inv(data['T_cam2_velo']).dot(p_cam)
-        p_velo3 = np.linalg.inv(data['T_cam3_velo']).dot(p_cam)
+        # # between them
+        # p_cam = np.array([0, 0, 0, 1])
+        # p_velo0 = np.linalg.inv(data['T_cam0_velo']).dot(p_cam)
+        # p_velo1 = np.linalg.inv(data['T_cam1_velo']).dot(p_cam)
+        # p_velo2 = np.linalg.inv(data['T_cam2_velo']).dot(p_cam)
+        # p_velo3 = np.linalg.inv(data['T_cam3_velo']).dot(p_cam)
 
-        data['b_gray'] = np.linalg.norm(p_velo1 - p_velo0)  # gray baseline
-        data['b_rgb'] = np.linalg.norm(p_velo3 - p_velo2)   # rgb baseline
+        # data['b_gray'] = np.linalg.norm(p_velo1 - p_velo0)  # gray baseline
+        # data['b_rgb'] = np.linalg.norm(p_velo3 - p_velo2)   # rgb baseline
 
         self.calib = namedtuple('CalibData', data.keys())(*data.values())
 
@@ -260,6 +253,7 @@ class DeepScenarioDataset(Dataset):
         self.use_index_mask = use_index_mask
         self.offset_d = offset_d
         self._datasets = [DeepScenarioOdometry(dataset_dir, sequence) for sequence in self.sequences]
+        # self._datasets = [pykitti.odometry(dataset_dir, sequence) for sequence in self.sequences]
         self._offset = (frame_count // 2) * dilation
         extra_frames = frame_count * dilation
         if self.annotated_lidar and self.lidar_depth:
@@ -432,7 +426,7 @@ class DeepScenarioDataset(Dataset):
             index = self._indices[dataset_index][index] - self._offset
 
         sequence_folder = self.dataset_dir / "sequences" / self.sequences[dataset_index]
-        depth_folder = sequence_folder / self.depth_folder
+        # depth_folder = sequence_folder / self.depth_folder
 
         if self.use_color_augmentation:
             self.color_transform.fix_transform()
