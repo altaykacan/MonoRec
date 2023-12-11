@@ -153,9 +153,9 @@ class DeepScenarioOdometry:
 
         # Compute the rectified extrinsics from cam0 to camN
         # Assuming there is no difference between the cameras (monocular video)
-        T1 = np.eye(4)
-        T2 = np.eye(4)
-        T3 = np.eye(4)
+        # T1 = np.eye(4)
+        # T2 = np.eye(4)
+        # T3 = np.eye(4)
 
         # Ignoring velodyne data, as we have monocular video
         # # Compute the velodyne to rectified camera coordinate transforms
@@ -272,6 +272,7 @@ class DeepScenarioDataset(Dataset):
         # Using custom Odometry class
         self._datasets = [DeepScenarioOdometry(dataset_dir, sequence, scale_factor) for sequence in self.sequences]
         # self._datasets = [pykitti.odometry(dataset_dir, sequence) for sequence in self.sequences]
+
         self._offset = (frame_count // 2) * dilation
         extra_frames = frame_count * dilation
         if self.annotated_lidar and self.lidar_depth:
