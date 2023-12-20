@@ -19,7 +19,7 @@ from utils import map_fn
 
 class DeepScenarioOdometry:
     """Class for parsing Deep Scenario (or any custom data) based on the pykitti
-    implemeentation"""
+    implementation"""
 
     def __init__(self, base_path, sequence, scale_factor=1, **kwargs):
         """Set the path."""
