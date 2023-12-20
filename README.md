@@ -1,7 +1,7 @@
 # 🎓 Master's Thesis Project Repo - MonoRec
 Exploring and adding capabilities to extend to custom monocular datasets. Current approach is to modify the KITTI dataset and the pykitti odometry classes to accomodate any monocular dataset.  
 
-Main changes are in the directory `./deepscenario`
+Main changes are in the directory `./deepscenario` and in the file `deepscenario_dataset.py`.
 
 # MonoRec
 [**Paper**](https://arxiv.org/abs/2011.11814) |  [**Video** (CVPR)](https://youtu.be/XimdlXUamo0) | [**Video** (Reconstruction)](https://youtu.be/-gDSBIm0vgk) | [**Project Page**](https://vision.in.tum.de/research/monorec)
