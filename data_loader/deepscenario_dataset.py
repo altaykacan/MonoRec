@@ -151,11 +151,14 @@ class DeepScenarioOdometry:
         data['P_rect_20'] = P_rect_20
         data['P_rect_30'] = P_rect_30
 
-        # Compute the rectified extrinsics from cam0 to camN
         # Assuming there is no difference between the cameras (monocular video)
+        # # Compute the rectified extrinsics from cam0 to camN
         # T1 = np.eye(4)
+        # T1[0, 3] = P_rect_10[0, 3] / P_rect_10[0, 0]
         # T2 = np.eye(4)
+        # T2[0, 3] = P_rect_20[0, 3] / P_rect_20[0, 0]
         # T3 = np.eye(4)
+        # T2[0, 3] = P_rect_30[0, 3] / P_rect_30[0, 0]
 
         # Ignoring velodyne data, as we have monocular video
         # # Compute the velodyne to rectified camera coordinate transforms
@@ -304,6 +307,7 @@ class DeepScenarioDataset(Dataset):
         intrinsics_box = [self.compute_target_intrinsics(dataset, target_image_size, use_color) for dataset in
                           self._datasets]
         self._crop_boxes = [b for _, b in intrinsics_box]
+        # Removing ground truth depth information
         # if self.dso_depth:
         #     self.dso_depth_parameters = [self.get_dso_depth_parameters(dataset) for dataset in self._datasets]
         # elif not self.lidar_depth:
@@ -445,6 +449,7 @@ class DeepScenarioDataset(Dataset):
             index = self._indices[dataset_index][index] - self._offset
 
         sequence_folder = self.dataset_dir / "sequences" / self.sequences[dataset_index]
+        # Assuming we have no ground truth depth
         # depth_folder = sequence_folder / self.depth_folder
 
         if self.use_color_augmentation:
@@ -452,6 +457,7 @@ class DeepScenarioDataset(Dataset):
 
         dataset = self._datasets[dataset_index]
         keyframe_intrinsics = self._intrinsics[dataset_index]
+        # Removing functionality related to ground truth depth
         # if not (self.lidar_depth or self.dso_depth):
         #     keyframe_depth = self.preprocess_depth(np.load(depth_folder / f"{(index + self._offset):06d}.npy"), self._depth_crop_boxes[dataset_index]).type(torch.float32).unsqueeze(0)
         # else:
