@@ -47,7 +47,7 @@ class Backprojection(nn.Module):
         self.N, self.H, self.W = batch_size, height, width
 
         yy, xx = torch.meshgrid([torch.arange(0., float(self.H)), torch.arange(0., float(self.W))])
-        yy = yy.contiguous().view(-1)
+        yy = yy.contiguous().view(-1) # We make sure the coordinate tensors are contiguous and flatten them
         xx = xx.contiguous().view(-1)
         self.ones = nn.Parameter(torch.ones(self.N, 1, self.H * self.W), requires_grad=False)
         self.coord = torch.unsqueeze(torch.stack([xx, yy], 0), 0).repeat(self.N, 1, 1)

@@ -109,3 +109,7 @@ datasets/
 .vscode/
 .idea/
 __MACOSX/
+
+# Saved images while debugging
+debug.png
+debug.jpg

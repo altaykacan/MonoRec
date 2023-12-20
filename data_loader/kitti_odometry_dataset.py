@@ -320,7 +320,8 @@ class KittiOdometryDataset(Dataset):
         P_cam = dataset.calib.P_rect_00 if not use_color else dataset.calib.P_rect_20
         orig_size = tuple(reversed((dataset.cam0 if not use_color else dataset.cam2).__next__().size))
 
-        r_orig = orig_size[0] / orig_size[1]
+        # Compute height to width ratios
+        r_orig = orig_size[0] / orig_size[1] #orig_size[0] is H_orig, orig_size[1] is W_orig
         r_target = target_image_size[0] / target_image_size[1]
 
         if r_orig >= r_target:

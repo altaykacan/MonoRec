@@ -91,12 +91,13 @@ def main(config):
                 keyframe = keyframe_buffer[key_index]
                 depth = depth_buffer[key_index]
 
-                mask = (torch.sum(torch.stack(mask_buffer), dim=0) > buffer_length - min_hits).to(dtype=torch.float32)
+                mask = (torch.sum(torch.stack(mask_buffer), dim=0) > buffer_length - min_hits).to(dtype=torch.float32) # Sum over the mask predictions for the
                 if use_mask:
                     depth *= mask
 
                 plysaver.add_depthmap(depth, keyframe, intrinsics, pose)
 
+                # Removes the first entries of each buffer
                 del pose_buffer[0]
                 del intrinsics_buffer[0]
                 del mask_buffer[0]

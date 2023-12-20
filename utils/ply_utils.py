@@ -25,10 +25,10 @@ class PLYSaver(torch.nn.Module):
 
     def add_depthmap(self, depth: torch.Tensor, image: torch.Tensor, intrinsics: torch.Tensor,
                      extrinsics: torch.Tensor):
-        depth = 1 / depth
+        depth = 1 / depth # The model predicts inverse depth, we want actual depth
         image = (image + .5) * 255
         mask = (self.min_d <= depth) & (depth <= self.max_d)
-        if self.roi is not None:
+        if self.roi is not None: # This is the region of the image that we want to use to construct the point cloud
             mask[:, :, :self.roi[0], :] = False
             mask[:, :, self.roi[1]:, :] = False
             mask[:, :, :, self.roi[2]] = False
@@ -38,7 +38,7 @@ class PLYSaver(torch.nn.Module):
 
         coords = self.projector(depth, torch.inverse(intrinsics))
         coords = extrinsics @ coords
-        coords = coords[:, :3, :]
+        coords = coords[:, :3, :] # Last row index is for the 1 we add in homogeneous coordinates, we don't need that
         data_batch = torch.cat([coords, image.view_as(coords)], dim=1).permute(0, 2, 1)
         data_batch = data_batch.view(-1, 6)[mask.view(-1), :]
 
