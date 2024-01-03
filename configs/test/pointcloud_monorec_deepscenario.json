@@ -2,7 +2,7 @@
   "name": "Pointcloud Creation",
   "n_gpu": 1,
   "output_dir": "saved/pointclouds/monorec",
-  "file_name": "deepscenario_frames_4_scale70_maxd_30_roi_100-256_100-300_256x512.ply",
+  "file_name": "meeting_demo.ply",
   "roi": [
     100,
     256,
