@@ -530,20 +530,21 @@ class DeepScenarioDataset(Dataset):
         P_cam = dataset.calib.P_rect_00 if not use_color else dataset.calib.P_rect_20
         orig_size = tuple(reversed((dataset.cam0 if not use_color else dataset.cam2).__next__().size))
 
+        # r is the ratio of Height / Width
         r_orig = orig_size[0] / orig_size[1]
         r_target = target_image_size[0] / target_image_size[1]
 
         if r_orig >= r_target:
-            new_height = r_target * orig_size[1]
+            new_height = r_target * orig_size[1] # width stays the same, new height is computed
             box = (0, (orig_size[0] - new_height) // 2, orig_size[1], orig_size[0] - (orig_size[0] - new_height) // 2)
 
-            c_x = P_cam[0, 2] / orig_size[1]
+            c_x = P_cam[0, 2] / orig_size[1] # width doesn't change so c_x stays the same, it is only normalized
             c_y = (P_cam[1, 2] - (orig_size[0] - new_height) / 2) / new_height
 
             rescale = orig_size[1] / target_image_size[1]
 
         else:
-            new_width = orig_size[0] / r_target
+            new_width = orig_size[0] / r_target # height stays the same, new width is computed
             box = ((orig_size[1] - new_width) // 2, 0, orig_size[1] - (orig_size[1] - new_width) // 2, orig_size[0])
 
             c_x = (P_cam[0, 2] - (orig_size[1] - new_width) / 2) / new_width
@@ -551,7 +552,7 @@ class DeepScenarioDataset(Dataset):
 
             rescale = orig_size[0] / target_image_size[0]
 
-        f_x = P_cam[0, 0] / target_image_size[1] / rescale
+        f_x = P_cam[0, 0] / target_image_size[1] / rescale # we normalize the focal lenghts and divide by the rescaling factor
         f_y = P_cam[1, 1] / target_image_size[0] / rescale
 
         intrinsics = (f_x, f_y, c_x, c_y)
@@ -575,10 +576,10 @@ class DeepScenarioDataset(Dataset):
 
 def format_intrinsics(intrinsics, target_image_size):
     intrinsics_mat = torch.zeros(4, 4)
-    intrinsics_mat[0, 0] = intrinsics[0] * target_image_size[1]
-    intrinsics_mat[1, 1] = intrinsics[1] * target_image_size[0]
-    intrinsics_mat[0, 2] = intrinsics[2] * target_image_size[1]
-    intrinsics_mat[1, 2] = intrinsics[3] * target_image_size[0]
+    intrinsics_mat[0, 0] = intrinsics[0] * target_image_size[1] #f_x
+    intrinsics_mat[1, 1] = intrinsics[1] * target_image_size[0] #f_y
+    intrinsics_mat[0, 2] = intrinsics[2] * target_image_size[1] #c_x
+    intrinsics_mat[1, 2] = intrinsics[3] * target_image_size[0] #c_y
     intrinsics_mat[2, 2] = 1
     intrinsics_mat[3, 3] = 1
     return intrinsics_mat
