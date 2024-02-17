@@ -58,8 +58,8 @@ def main(config):
     keyframe_buffer = []
     depth_buffer = []
 
-    buffer_length = 5
-    min_hits = 1
+    buffer_length = 10
+    min_hits = 2
     key_index = buffer_length // 2
 
     with torch.no_grad():

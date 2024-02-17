@@ -18,8 +18,12 @@ import pykitti.utils as utils
 from utils import map_fn
 
 class DeepScenarioOdometry:
-    """Class for parsing Deep Scenario (or any custom data) based on the pykitti
-    implementation"""
+    """
+    Class for parsing Deep Scenario (or any custom data) based on the pykitti
+    implementation. First reads the poses which contain corresponding frame
+    names (not every frame gets a pose with SLAM when tracking is lost) and
+    loads in the corresponding images.
+    """
 
     def __init__(self, base_path, sequence, scale_factor=1, **kwargs):
         """Set the path."""
@@ -27,7 +31,13 @@ class DeepScenarioOdometry:
         self.sequence_path = os.path.join(base_path, 'sequences', sequence)
         self.pose_path = os.path.join(base_path, 'poses')
         self.scale_factor = scale_factor
-        self.frames = kwargs.get('frames', None)
+
+        # Try to get prespecified frames first
+        self.frames = kwargs.get("frames", None)
+
+        # Then filter them again such that we only use frames with poses
+        frames_with_pose = self._load_poses()
+        self.frames = frames_with_pose
 
         # Default image file extension is 'png'
         self.imtype = kwargs.get('imtype', 'png')
@@ -38,7 +48,6 @@ class DeepScenarioOdometry:
         # Pre-load data that isn't returned as a generator
         self._load_calib()
         self._load_timestamps()
-        self._load_poses()
 
     def __len__(self):
         """Return the number of frames loaded."""
@@ -126,8 +135,9 @@ class DeepScenarioOdometry:
                 self.cam2_files, self.frames)
             self.cam3_files = utils.subselect_files(
                 self.cam3_files, self.frames)
-            self.velo_files = utils.subselect_files(
-                self.velo_files, self.frames)
+            # No velo files, this is not KITTI!
+            # self.velo_files = utils.subselect_files(
+            #     self.velo_files, self.frames)
 
     def _load_calib(self):
         """Load and compute intrinsic and extrinsic calibration parameters."""
@@ -209,6 +219,8 @@ class DeepScenarioOdometry:
         """Load ground truth poses (T_w_cam0) from file."""
         pose_file = os.path.join(self.pose_path, self.sequence + '.txt')
 
+        image_ids = []
+
         # Read and parse the poses
         poses = []
         try:
@@ -218,7 +230,15 @@ class DeepScenarioOdometry:
                     lines = [lines[i] for i in self.frames]
 
                 for line in lines:
-                    T_w_cam0 = np.fromstring(line, dtype=float, sep=' ')
+                    split_line = line.split(" ") # output is a list
+
+                    image_id = Path(split_line[0]).stem # stem doesn't have file extension
+                    image_ids.append(int(image_id)) # need to have the id's as indices
+
+                    pose_line = split_line[1:]
+                    pose_line = " ".join(pose_line) # to convert the list into a string
+
+                    T_w_cam0 = np.fromstring(pose_line, dtype=float, sep=' ')
                     T_w_cam0 = T_w_cam0.reshape(3, 4)
                     # Multiply the translation components (last column) with the scale factor
                     T_w_cam0[:,-1] = T_w_cam0[:,-1] * self.scale_factor
@@ -231,6 +251,7 @@ class DeepScenarioOdometry:
 
         self.poses = poses
 
+        return image_ids
 
 class DeepScenarioDataset(Dataset):
 

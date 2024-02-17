@@ -151,7 +151,7 @@ class CostVolumeModule(nn.Module):
         start_time = time.time()
         keyframe = data_dict["keyframe"]
         keyframe_intrinsics = data_dict["keyframe_intrinsics"]
-        keyframe_pose = data_dict["keyframe_pose"]
+        keyframe_pose = data_dict["keyframe_pose"] # Pose of the keyframe T_WCk
 
         frames = []
         intrinsics = []
@@ -195,20 +195,22 @@ class CostVolumeModule(nn.Module):
 
             depth_value_count = batch_depths.shape[0]
 
-            inv_k = torch.inverse(keyframe_intrinsics[batch_nr]).unsqueeze(0)
+            inv_k = torch.inverse(keyframe_intrinsics[batch_nr]).unsqueeze(0) # inverse intrinsics of the keyframe
             cam_points = (inv_k[:, :3, :3] @ backproject_depth.coord)
             cam_points = batch_depths.view(depth_value_count, 1, -1) * cam_points
-            cam_points = torch.cat([cam_points, backproject_depth.ones.expand(depth_value_count, -1, -1)], 1)
+            cam_points = torch.cat([cam_points, backproject_depth.ones.expand(depth_value_count, -1, -1)], 1) # 3d points in keyframe coords
 
             warped_images = []
             warped_masks = []
 
             for i, image in enumerate(frames):
-                t = extrinsics[i][batch_nr] @ keyframe_pose[batch_nr]
+                t = extrinsics[i][batch_nr] @ keyframe_pose[batch_nr] # T_CfW @ T_WCk -> T_CfCk, i.e. transforms keyframe coords to frame coords
+
+                # We get the pixel coordinates after we project the backprojected 3d points to the frame to use as the grid in F.grid_sample
                 pix_coords = point_projection(cam_points, depth_value_count, height, width, intrinsics[i][batch_nr].unsqueeze(0), t.unsqueeze(0)).clamp(-2, 2)
 
                 # (D, C, H, W)
-                image_to_warp = image[batch_nr, :, :, :].unsqueeze(0).expand(depth_value_count, -1, -1, -1)
+                image_to_warp = image[batch_nr, :, :, :].unsqueeze(0).expand(depth_value_count, -1, -1, -1) # this is the current frame
                 mask_to_warp = self.create_mask(1, height, width, self.border_radius, keyframe.device).expand(
                     depth_value_count, -1, -1, -1)
 
@@ -580,10 +582,10 @@ class MonoRecModel(nn.Module):
         :param use_mono: Use monocular frames during the forward pass. (Default=True)
         :param use_stereo: Use stereo frame during the forward pass. (Default=False)
         :param use_ssim: Use SSIM during cost volume computation. (Default=True)
-        :param sfcv_mult_mask: For the single frame cost volumes: If a pixel does not have a valid reprojection at any 
+        :param sfcv_mult_mask: For the single frame cost volumes: If a pixel does not have a valid reprojection at any
         depth step, all depths get invalidated. (Default=True)
-        :param simple_mask: Use the standard cost volume instead of multiple single frame cost volumes in the mask 
-        module. (Default=False) 
+        :param simple_mask: Use the standard cost volume instead of multiple single frame cost volumes in the mask
+        module. (Default=False)
         :param cv_patch_size: Patchsize, over which the ssim errors get averaged. (Default=3)
         :param freeze_module: Freeze given string list of modules. (Default=())
         :param checkpoint_location: Load given list of checkpoints. (Default=None)

@@ -1,17 +1,17 @@
 {
   "name": "Pointcloud Creation",
   "n_gpu": 1,
-  "output_dir": "saved/pointclouds/monorec",
-  "file_name": "meeting_demo.ply",
+  "output_dir": "./saved/pointclouds/monorec",
+  "file_name": "monorec_final.ply",
   "roi": [
-    100,
-    256,
-    0,
-    500
+    200,
+    512,
+    50,
+    980
   ],
   "start": 0,
   "end": -1,
-  "max_d": 30,
+  "max_d": 20,
   "use_mask": true,
   "arch": {
     "type": "MonoRecModel",
@@ -26,18 +26,18 @@
     "type": "DeepScenarioDataset",
     "args": {
       "dataset_dir": "/usr/stud/kaa/thesis/data_temp/deep_scenario/",
-      "frame_count": 4,
+      "frame_count": 2,
       "lidar_depth": false,
       "sequences": [
         "01"
       ],
       "target_image_size": [
-        256,
-        512
+        512,
+        1024
       ],
       "use_color": true,
-      "use_dso_poses": true,
-      "scale_factor":70
+      "use_dso_poses": false,
+      "scale_factor": 93
     }
   }
 }
