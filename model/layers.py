@@ -54,20 +54,21 @@ class Backprojection(nn.Module):
         self.coord = nn.Parameter(torch.cat([self.coord, self.ones], 1), requires_grad=False)
 
     def forward(self, depth, inv_K) :
-        cam_p_norm = torch.matmul(inv_K[:, :3, :3], self.coord[:depth.shape[0], :, :])
-        cam_p_euc = depth.view(depth.shape[0], 1, -1) * cam_p_norm
-        cam_p_h = torch.cat([cam_p_euc, self.ones[:depth.shape[0], :, :]], 1)
+        cam_p_norm = torch.matmul(inv_K[:, :3, :3], self.coord[:depth.shape[0], :, :]) # normalized coords
+        cam_p_euc = depth.view(depth.shape[0], 1, -1) * cam_p_norm # euclidean coords
+        cam_p_h = torch.cat([cam_p_euc, self.ones[:depth.shape[0], :, :]], 1) # homogeneous coords
 
         return cam_p_h
 
 def point_projection(points3D, batch_size, height, width, K, T):
     N, H, W = batch_size, height, width
-    cam_coord = torch.matmul(torch.matmul(K, T)[:, :3, :], points3D)
+    cam_coord = torch.matmul(torch.matmul(K, T)[:, :3, :], points3D) # project to current camera
     img_coord = cam_coord[:, :2, :] / (cam_coord[:, 2:3, :] + 1e-7)
+    # F.grid_sample() needs normalized pixel coords where the dimension with size 2 are the pixel locations to sample from the input tensor
     img_coord[:, 0, :] /= W - 1
     img_coord[:, 1, :] /= H - 1
     img_coord = (img_coord - 0.5) * 2
-    img_coord = img_coord.view(N, 2, H, W).permute(0, 2, 3, 1)
+    img_coord = img_coord.view(N, 2, H, W).permute(0, 2, 3, 1) # need to get it in (N, H_out, W_out, 2) shape
     return img_coord
 
 def upsample(x):
